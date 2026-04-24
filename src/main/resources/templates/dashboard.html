@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CostFlow Manager</title>
+    <link rel="stylesheet" th:href="@{/css/costflow.css}">
+</head>
+<body>
+<header class="hero">
+    <nav class="top-nav">
+        <div>
+            <p class="eyebrow">CostFlow Manager</p>
+            <h1>원가/관리회계 월별 마감 시스템</h1>
+        </div>
+        <div class="nav-actions">
+            <a href="#workflow">업무 흐름</a>
+            <a href="#closing">마감 현황</a>
+            <a href="#projects">프로젝트</a>
+        </div>
+    </nav>
+    <section class="hero-grid">
+        <div>
+            <h2>인력·프로젝트·본부·전사 단위 원가 흐름을 한 화면에서 관리합니다.</h2>
+            <p>
+                비용 입력, 공통비 배부, 내부대체가액, 표준원가, 월별 마감/승인, 정산 조회까지 이어지는
+                관리회계 포트폴리오 MVP 화면입니다.
+            </p>
+        </div>
+        <div class="hero-card">
+            <span class="status-pill">MVP Phase 1</span>
+            <strong>현재 구현 범위</strong>
+            <p>기준정보, 마감 월, 비용 입력 API와 프로젝트 참여 인력 기반을 제공합니다.</p>
+        </div>
+    </section>
+</header>
+
+<main class="page">
+    <section class="metric-grid" aria-label="기준정보 요약">
+        <article class="metric-card">
+            <span>본부</span>
+            <strong th:text="${headquartersCount}">0</strong>
+            <p>Headquarters</p>
+        </article>
+        <article class="metric-card">
+            <span>부서</span>
+            <strong th:text="${departmentCount}">0</strong>
+            <p>Departments</p>
+        </article>
+        <article class="metric-card">
+            <span>인력</span>
+            <strong th:text="${employeeCount}">0</strong>
+            <p>Employees</p>
+        </article>
+        <article class="metric-card">
+            <span>프로젝트</span>
+            <strong th:text="${projectCount}">0</strong>
+            <p>Projects</p>
+        </article>
+        <article class="metric-card">
+            <span>비용 항목</span>
+            <strong th:text="${costCategoryCount}">0</strong>
+            <p>Cost Categories</p>
+        </article>
+    </section>
+
+    <section id="workflow" class="panel">
+        <div class="section-title">
+            <p class="eyebrow">Workflow</p>
+            <h2>원가 마감 업무 흐름</h2>
+        </div>
+        <div class="workflow">
+            <div class="workflow-step"><span>1</span><strong>기준정보</strong><p>본부, 부서, 인력, 프로젝트 구성</p></div>
+            <div class="workflow-step"><span>2</span><strong>비용 입력</strong><p>인건비, 직접비, 공통비 등록</p></div>
+            <div class="workflow-step"><span>3</span><strong>배부/계산</strong><p>공통비 배부와 표준원가 계산</p></div>
+            <div class="workflow-step"><span>4</span><strong>마감 승인</strong><p>승인/반려 이력 관리</p></div>
+            <div class="workflow-step"><span>5</span><strong>정산 조회</strong><p>확정 스냅샷과 분석 조회</p></div>
+        </div>
+    </section>
+
+    <section id="closing" class="panel two-column">
+        <div>
+            <div class="section-title">
+                <p class="eyebrow">Closing</p>
+                <h2>마감 월 현황</h2>
+            </div>
+            <table>
+                <thead>
+                <tr>
+                    <th>마감 월</th>
+                    <th>상태</th>
+                    <th>버전</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(closingPeriods)}">
+                    <td colspan="3">등록된 마감 월이 없습니다.</td>
+                </tr>
+                <tr th:each="period : ${closingPeriods}">
+                    <td th:text="${period.yearMonth}">2026-04</td>
+                    <td><span class="table-pill" th:text="${period.status}">OPEN</span></td>
+                    <td th:text="${period.version}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <aside class="info-card">
+            <h3>마감 상태 원칙</h3>
+            <ul>
+                <li>OPEN 상태에서만 비용 등록/수정/삭제 가능</li>
+                <li>계산/승인/확정 경로에서는 stale fallback 금지</li>
+                <li>확정 결과는 Settlement 스냅샷으로 보존 예정</li>
+            </ul>
+        </aside>
+    </section>
+
+    <section id="projects" class="panel">
+        <div class="section-title">
+            <p class="eyebrow">Projects</p>
+            <h2>프로젝트 현황</h2>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>코드</th>
+                <th>프로젝트명</th>
+                <th>유형</th>
+                <th>상태</th>
+                <th>기간</th>
+                <th>계획 원가</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(projects)}">
+                <td colspan="6">등록된 프로젝트가 없습니다.</td>
+            </tr>
+            <tr th:each="project : ${projects}">
+                <td th:text="${project.code}">P-001</td>
+                <td th:text="${project.name}">정산 시스템 구축</td>
+                <td th:text="${project.projectType}">SI</td>
+                <td><span class="table-pill" th:text="${project.status}">PLANNED</span></td>
+                <td th:text="${project.startDate + ' ~ ' + project.endDate}">2026-01-01 ~ 2026-12-31</td>
+                <td th:text="${#numbers.formatDecimal(project.plannedCost, 0, 'COMMA', 0, 'POINT')}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

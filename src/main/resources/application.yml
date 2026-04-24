@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: cost-management-accounting
+  datasource:
+    url: jdbc:postgresql://localhost:5432/costflow
+    username: costflow
+    password: costflow
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+server:
+  port: 8080
