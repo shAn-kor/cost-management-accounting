@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CostFlow Operations Workspace</title>
+    <link rel="stylesheet" th:href="@{/css/costflow.css}">
+</head>
+<body>
+<header class="hero hero-compact">
+    <nav class="top-nav">
+        <div>
+            <p class="eyebrow">CostFlow Manager</p>
+            <h1>업무용 운영 콘솔</h1>
+        </div>
+        <div class="nav-actions">
+            <a th:href="@{/dashboard}">대시보드</a>
+            <a href="#setup">기준정보</a>
+            <a href="#closing">마감/비용</a>
+            <a href="#calculation">계산/배부</a>
+            <a href="#results">결과</a>
+        </div>
+    </nav>
+    <section class="hero-grid compact-grid">
+        <div>
+            <h2>기준정보 등록부터 비용 입력, 배부/계산 실행까지 한 화면에서 처리합니다.</h2>
+            <p>
+                현재 운영 콘솔은 서버 렌더링 기반 MVP입니다. 핵심 마스터 등록, 마감 월 선택,
+                표준원가·배부·내부대체가액 실행과 결과 조회를 웹 화면에서 바로 수행할 수 있습니다.
+            </p>
+        </div>
+        <div class="hero-card">
+            <span class="status-pill">Operations MVP</span>
+            <strong th:text="${view.focusedClosingPeriodYearMonth == null ? '선택된 마감 월 없음' : '선택 마감 월 ' + view.focusedClosingPeriodYearMonth}">선택 마감 월 없음</strong>
+            <p>상단 필터에서 마감 월을 바꾸면 비용/계산/결과 영역이 함께 갱신됩니다.</p>
+        </div>
+    </section>
+</header>
+
+<main class="page workspace-page">
+    <div class="notice success" th:if="${notice != null}" th:text="${notice}">처리 완료</div>
+    <div class="notice error" th:if="${error != null}" th:text="${error}">오류 메시지</div>
+
+    <section class="panel toolbar-panel">
+        <div class="section-title compact-title">
+            <p class="eyebrow">Workspace Filter</p>
+            <h2>조회 기준 마감 월</h2>
+        </div>
+        <form class="toolbar-form" th:action="@{/operations}" method="get">
+            <label>
+                마감 월
+                <select name="closingPeriodId">
+                    <option value="">최신 마감 월 자동 선택</option>
+                    <option
+                        th:each="period : ${view.closingPeriods}"
+                        th:value="${period.id}"
+                        th:text="${period.yearMonth + ' · ' + period.status}"
+                        th:selected="${view.focusedClosingPeriodId != null and period.id.equals(view.focusedClosingPeriodId)}"
+                    >2026-04 · OPEN</option>
+                </select>
+            </label>
+            <button type="submit">반영</button>
+        </form>
+    </section>
+
+    <section id="setup" class="panel">
+        <div class="section-title">
+            <p class="eyebrow">Setup</p>
+            <h2>기준정보 등록</h2>
+        </div>
+        <div class="form-grid three-column">
+            <article class="form-card">
+                <h3>본부 등록</h3>
+                <form th:action="@{/operations/headquarters}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>본부 코드<input name="code" required placeholder="HQ-001"></label>
+                    <label>본부명<input name="name" required placeholder="Delivery HQ"></label>
+                    <button type="submit">본부 추가</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>부서 등록</h3>
+                <form th:action="@{/operations/departments}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>본부
+                        <select name="headquartersId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.headquarters}" th:value="${item.id}" th:text="${item.code + ' · ' + item.name}">HQ</option>
+                        </select>
+                    </label>
+                    <label>부서 코드<input name="code" required placeholder="DEP-001"></label>
+                    <label>부서명<input name="name" required placeholder="Platform Team"></label>
+                    <button type="submit">부서 추가</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>직급 등록</h3>
+                <form th:action="@{/operations/job-grades}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>직급 코드<input name="code" required placeholder="G4"></label>
+                    <label>직급명<input name="name" required placeholder="Senior"></label>
+                    <label>정렬 순서<input type="number" name="sortOrder" required value="10"></label>
+                    <button type="submit">직급 추가</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>인력 등록</h3>
+                <form th:action="@{/operations/employees}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>사번<input name="employeeNo" required placeholder="EMP-1001"></label>
+                    <label>성명<input name="name" required placeholder="홍길동"></label>
+                    <label>고용형태<input name="employmentType" required placeholder="정규직"></label>
+                    <label>부서
+                        <select name="departmentId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.departments}" th:value="${item.id}" th:text="${item.headquartersCode + ' / ' + item.name}">부서</option>
+                        </select>
+                    </label>
+                    <label>직급
+                        <select name="jobGradeId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.jobGrades}" th:value="${item.id}" th:text="${item.code + ' · ' + item.name}">직급</option>
+                        </select>
+                    </label>
+                    <button type="submit">인력 추가</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>비용 항목 등록</h3>
+                <form th:action="@{/operations/cost-categories}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>비용 코드<input name="code" required placeholder="COST-001"></label>
+                    <label>비용명<input name="name" required placeholder="개발 인건비"></label>
+                    <label>분류 그룹<input name="categoryGroup" required placeholder="LABOR"></label>
+                    <button type="submit">비용 항목 추가</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>프로젝트 등록</h3>
+                <form th:action="@{/operations/projects}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>프로젝트 코드<input name="code" required placeholder="PJT-001"></label>
+                    <label>프로젝트명<input name="name" required placeholder="원가관리 구축"></label>
+                    <label>유형<input name="projectType" required placeholder="SI"></label>
+                    <label>부서
+                        <select name="departmentId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.departments}" th:value="${item.id}" th:text="${item.name}">부서</option>
+                        </select>
+                    </label>
+                    <div class="form-row two-fields">
+                        <label>시작일<input type="date" name="startDate" required></label>
+                        <label>종료일<input type="date" name="endDate" required></label>
+                    </div>
+                    <div class="form-row two-fields">
+                        <label>계획 매출<input type="number" step="0.01" min="0" name="plannedRevenue" required value="0"></label>
+                        <label>계획 원가<input type="number" step="0.01" min="0" name="plannedCost" required value="0"></label>
+                    </div>
+                    <button type="submit">프로젝트 추가</button>
+                </form>
+            </article>
+            <article class="form-card wide-card">
+                <h3>프로젝트 참여 인력 등록</h3>
+                <form th:action="@{/operations/project-members}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <div class="form-row two-fields">
+                        <label>프로젝트
+                            <select name="projectId" required>
+                                <option value="">선택</option>
+                                <option th:each="item : ${view.projects}" th:value="${item.id}" th:text="${item.code + ' · ' + item.name}">프로젝트</option>
+                            </select>
+                        </label>
+                        <label>인력
+                            <select name="employeeId" required>
+                                <option value="">선택</option>
+                                <option th:each="item : ${view.employees}" th:value="${item.id}" th:text="${item.employeeNo + ' · ' + item.name}">인력</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-row three-fields">
+                        <label>역할<input name="role" required placeholder="PL / Developer"></label>
+                        <label>투입률(%)<input type="number" step="0.01" min="0.01" max="100" name="allocationRate" required value="100"></label>
+                        <label>월 투입시간<input type="number" step="0.01" min="0" name="monthlyWorkHours" required value="160"></label>
+                    </div>
+                    <div class="form-row two-fields">
+                        <label>시작일<input type="date" name="startDate" required></label>
+                        <label>종료일<input type="date" name="endDate" required></label>
+                    </div>
+                    <button type="submit">참여 인력 추가</button>
+                </form>
+            </article>
+        </div>
+
+        <div class="table-grid two-column-tables">
+            <div class="table-card">
+                <h3>본부 / 부서</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>구분</th><th>코드</th><th>명칭</th><th>상태</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.headquarters}">
+                            <td>본부</td>
+                            <td th:text="${item.code}">HQ-001</td>
+                            <td th:text="${item.name}">Delivery HQ</td>
+                            <td><span class="table-pill" th:text="${item.active ? 'ACTIVE' : 'INACTIVE'}">ACTIVE</span></td>
+                        </tr>
+                        <tr th:each="item : ${view.departments}">
+                            <td th:text="${item.headquartersCode}">HQ-001</td>
+                            <td th:text="${item.code}">DEP-001</td>
+                            <td th:text="${item.name + ' / ' + item.headquartersName}">Platform Team</td>
+                            <td><span class="table-pill" th:text="${item.active ? 'ACTIVE' : 'INACTIVE'}">ACTIVE</span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.headquarters) and #lists.isEmpty(view.departments)}">
+                            <td colspan="4">등록된 본부/부서가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card">
+                <h3>직급 / 인력 / 비용 항목</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>구분</th><th>코드</th><th>명칭</th><th>보조 정보</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.jobGrades}">
+                            <td>직급</td>
+                            <td th:text="${item.code}">G4</td>
+                            <td th:text="${item.name}">Senior</td>
+                            <td th:text="${'순서 ' + item.sortOrder}">순서 10</td>
+                        </tr>
+                        <tr th:each="item : ${view.employees}">
+                            <td>인력</td>
+                            <td th:text="${item.employeeNo}">EMP-1001</td>
+                            <td th:text="${item.name}">홍길동</td>
+                            <td th:text="${item.departmentName + ' / ' + item.jobGradeName + ' / ' + item.employmentType}">부서 / 직급</td>
+                        </tr>
+                        <tr th:each="item : ${view.costCategories}">
+                            <td>비용</td>
+                            <td th:text="${item.code}">COST-001</td>
+                            <td th:text="${item.name}">개발 인건비</td>
+                            <td th:text="${item.categoryGroup}">LABOR</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.jobGrades) and #lists.isEmpty(view.employees) and #lists.isEmpty(view.costCategories)}">
+                            <td colspan="4">등록된 직급/인력/비용 항목이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card wide-card">
+                <h3>프로젝트 / 참여 인력</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>프로젝트</th><th>부서</th><th>상태</th><th>기간/계획</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.projects}">
+                            <td th:text="${item.code + ' · ' + item.name}">PJT-001</td>
+                            <td th:text="${item.departmentCode + ' / ' + item.departmentName}">DEP-001</td>
+                            <td><span class="table-pill" th:text="${item.status}">PLANNED</span></td>
+                            <td th:text="${item.startDate + ' ~ ' + item.endDate + ' / ' + #numbers.formatDecimal(item.plannedCost, 0, 'COMMA', 0, 'POINT')}">기간</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.projects)}">
+                            <td colspan="4">등록된 프로젝트가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-scroll secondary-table">
+                    <table>
+                        <thead>
+                        <tr><th>프로젝트</th><th>인력</th><th>역할</th><th>투입</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.projectMembers}">
+                            <td th:text="${item.projectCode + ' · ' + item.projectName}">PJT-001</td>
+                            <td th:text="${item.employeeNo + ' · ' + item.employeeName}">EMP-1001</td>
+                            <td th:text="${item.role + ' / ' + item.jobGradeName}">Developer</td>
+                            <td th:text="${item.allocationRate + '% / ' + item.monthlyWorkHours + 'h'}">100% / 160h</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.projectMembers)}">
+                            <td colspan="4">등록된 활성 참여 인력이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="closing" class="panel">
+        <div class="section-title">
+            <p class="eyebrow">Closing &amp; Cost</p>
+            <h2>마감 월 관리와 비용 입력</h2>
+        </div>
+        <div class="form-grid two-column-form-grid">
+            <article class="form-card">
+                <h3>마감 월 등록</h3>
+                <form th:action="@{/operations/closing-periods}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>마감 월<input type="month" name="yearMonth" required></label>
+                    <button type="submit">마감 월 추가</button>
+                </form>
+            </article>
+            <article class="form-card wide-card">
+                <h3>비용 등록</h3>
+                <form th:action="@{/operations/cost-entries}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <div class="form-row three-fields">
+                        <label>마감 월
+                            <select name="closingPeriodId" required>
+                                <option value="">선택</option>
+                                <option th:each="item : ${view.closingPeriods}" th:value="${item.id}" th:text="${item.yearMonth + ' · ' + item.status}" th:selected="${view.focusedClosingPeriodId != null and item.id.equals(view.focusedClosingPeriodId)}">2026-04</option>
+                            </select>
+                        </label>
+                        <label>비용 항목
+                            <select name="costCategoryId" required>
+                                <option value="">선택</option>
+                                <option th:each="item : ${view.costCategories}" th:value="${item.id}" th:text="${item.code + ' · ' + item.name}">비용항목</option>
+                            </select>
+                        </label>
+                        <label>발생일<input type="date" name="occurredDate" required></label>
+                    </div>
+                    <div class="form-row four-fields">
+                        <label>비용 유형
+                            <select name="costType" required>
+                                <option th:each="item : ${T(com.costflow.accounting.domain.cost.CostType).values()}" th:value="${item}" th:text="${item}">COMMON</option>
+                            </select>
+                        </label>
+                        <label>귀속 범위
+                            <select name="costScope" required>
+                                <option th:each="item : ${T(com.costflow.accounting.domain.cost.CostScope).values()}" th:value="${item}" th:text="${item}">PROJECT</option>
+                            </select>
+                        </label>
+                        <label>원천 유형
+                            <select name="sourceType" required>
+                                <option th:each="item : ${T(com.costflow.accounting.domain.cost.CostSourceType).values()}" th:value="${item}" th:text="${item}">MANUAL</option>
+                            </select>
+                        </label>
+                        <label>금액<input type="number" step="0.01" min="0" name="amount" required value="0"></label>
+                    </div>
+                    <div class="form-row four-fields">
+                        <label>프로젝트
+                            <select name="projectId">
+                                <option value="">미선택</option>
+                                <option th:each="item : ${view.projects}" th:value="${item.id}" th:text="${item.code + ' · ' + item.name}">프로젝트</option>
+                            </select>
+                        </label>
+                        <label>부서
+                            <select name="departmentId">
+                                <option value="">미선택</option>
+                                <option th:each="item : ${view.departments}" th:value="${item.id}" th:text="${item.name}">부서</option>
+                            </select>
+                        </label>
+                        <label>본부
+                            <select name="headquartersId">
+                                <option value="">미선택</option>
+                                <option th:each="item : ${view.headquarters}" th:value="${item.id}" th:text="${item.name}">본부</option>
+                            </select>
+                        </label>
+                        <label>인력
+                            <select name="employeeId">
+                                <option value="">미선택</option>
+                                <option th:each="item : ${view.employees}" th:value="${item.id}" th:text="${item.employeeNo + ' · ' + item.name}">인력</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label>설명<input name="description" required placeholder="월간 프로젝트 공통비"></label>
+                    <label>원천 참조값<input name="sourceReference" placeholder="ERP-2026-04-0001"></label>
+                    <button type="submit">비용 저장</button>
+                </form>
+            </article>
+        </div>
+
+        <div class="table-grid two-column-tables">
+            <div class="table-card">
+                <h3>마감 월 현황 / 상태 전환</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>마감 월</th><th>상태</th><th>버전</th><th>전환</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.closingPeriods}">
+                            <td th:text="${item.yearMonth}">2026-04</td>
+                            <td><span class="table-pill" th:text="${item.status}">OPEN</span></td>
+                            <td th:text="${item.version}">0</td>
+                            <td>
+                                <form class="inline-form" th:action="@{/operations/closing-periods/status}" method="post">
+                                    <input type="hidden" name="closingPeriodId" th:value="${item.id}">
+                                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                                    <select name="nextStatus">
+                                        <option th:each="status : ${T(com.costflow.accounting.domain.closing.ClosingStatus).values()}" th:value="${status}" th:text="${status}">OPEN</option>
+                                    </select>
+                                    <button type="submit">변경</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.closingPeriods)}">
+                            <td colspan="4">등록된 마감 월이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card">
+                <h3 th:text="${view.focusedClosingPeriodYearMonth == null ? '선택 마감 월 비용 내역' : view.focusedClosingPeriodYearMonth + ' 비용 내역'}">비용 내역</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>일자</th><th>비용</th><th>유형</th><th>귀속</th><th>금액</th><th>대상</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.costEntries}">
+                            <td th:text="${item.occurredDate}">2026-04-30</td>
+                            <td th:text="${item.costCategoryCode + ' · ' + item.description}">설명</td>
+                            <td th:text="${item.costType + ' / ' + item.sourceType}">COMMON</td>
+                            <td th:text="${item.costScope}">PROJECT</td>
+                            <td th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">1000000</td>
+                            <td th:text="${item.projectName != null ? item.projectName : (item.departmentName != null ? item.departmentName : (item.headquartersName != null ? item.headquartersName : (item.employeeName != null ? item.employeeName : '전사')))}">대상</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.costEntries)}">
+                            <td colspan="6">선택한 마감 월에 등록된 비용이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="calculation" class="panel">
+        <div class="section-title">
+            <p class="eyebrow">Calculation</p>
+            <h2>표준원가 / 공통비 배부 / 내부대체가액</h2>
+        </div>
+        <div class="form-grid three-column">
+            <article class="form-card">
+                <h3>표준노무단가 등록</h3>
+                <form th:action="@{/operations/standard-labor-rates}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>직급
+                        <select name="jobGradeId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.jobGrades}" th:value="${item.id}" th:text="${item.code + ' · ' + item.name}">G4</option>
+                        </select>
+                    </label>
+                    <label>시간당 단가<input type="number" step="0.01" min="0" name="hourlyRate" required value="0"></label>
+                    <div class="form-row two-fields">
+                        <label>적용 시작일<input type="date" name="effectiveFrom" required></label>
+                        <label>적용 종료일<input type="date" name="effectiveTo"></label>
+                    </div>
+                    <button type="submit">표준단가 저장</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>표준원가 계산</h3>
+                <form th:action="@{/operations/standard-costs/calculate}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>마감 월
+                        <select name="closingPeriodId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.closingPeriods}" th:value="${item.id}" th:text="${item.yearMonth + ' · ' + item.status}" th:selected="${view.focusedClosingPeriodId != null and item.id.equals(view.focusedClosingPeriodId)}">2026-04</option>
+                        </select>
+                    </label>
+                    <p class="form-hint">활성 프로젝트 참여 인력과 유효 표준단가 기준으로 계산합니다.</p>
+                    <button type="submit">표준원가 계산 실행</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>배부 기준 등록</h3>
+                <form th:action="@{/operations/allocation-rules}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>배부 기준명<input name="name" required placeholder="부서 공통비 배부"></label>
+                    <label>배부 방식
+                        <select name="allocationType" required>
+                            <option th:each="item : ${T(com.costflow.accounting.domain.allocation.AllocationType).values()}" th:value="${item}" th:text="${item}">HOURS</option>
+                        </select>
+                    </label>
+                    <label>원천 범위
+                        <select name="sourceScope" required>
+                            <option value="DEPARTMENT">DEPARTMENT</option>
+                            <option value="HEADQUARTERS">HEADQUARTERS</option>
+                            <option value="COMPANY">COMPANY</option>
+                        </select>
+                    </label>
+                    <button type="submit">배부 기준 저장</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>공통비 배부 실행</h3>
+                <form th:action="@{/operations/allocation-executions}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>마감 월
+                        <select name="closingPeriodId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.closingPeriods}" th:value="${item.id}" th:text="${item.yearMonth + ' · ' + item.status}" th:selected="${view.focusedClosingPeriodId != null and item.id.equals(view.focusedClosingPeriodId)}">2026-04</option>
+                        </select>
+                    </label>
+                    <label>배부 기준
+                        <select name="allocationRuleId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.allocationRules}" th:value="${item.id}" th:text="${item.name + ' / ' + item.allocationType + ' / ' + item.sourceScope}">규칙</option>
+                        </select>
+                    </label>
+                    <label>멱등 키(선택)<input name="idempotencyKey" placeholder="비워두면 자동 생성"></label>
+                    <button type="submit">배부 실행</button>
+                </form>
+            </article>
+            <article class="form-card">
+                <h3>내부대체가액 계산</h3>
+                <form th:action="@{/operations/transfer-prices/calculate}" method="post">
+                    <input type="hidden" name="focusedClosingPeriodId" th:value="${view.focusedClosingPeriodId}">
+                    <label>마감 월
+                        <select name="closingPeriodId" required>
+                            <option value="">선택</option>
+                            <option th:each="item : ${view.closingPeriods}" th:value="${item.id}" th:text="${item.yearMonth + ' · ' + item.status}" th:selected="${view.focusedClosingPeriodId != null and item.id.equals(view.focusedClosingPeriodId)}">2026-04</option>
+                        </select>
+                    </label>
+                    <p class="form-hint">활성 참여 인력의 표준단가 × 월 투입시간 기준으로 계산합니다.</p>
+                    <button type="submit">내부대체가액 계산 실행</button>
+                </form>
+            </article>
+            <article class="table-card">
+                <h3>표준노무단가 현황</h3>
+                <div class="table-scroll compact-table">
+                    <table>
+                        <thead>
+                        <tr><th>직급</th><th>단가</th><th>적용기간</th><th>상태</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.standardLaborRates}">
+                            <td th:text="${item.jobGradeCode + ' · ' + item.jobGradeName}">G4</td>
+                            <td th:text="${#numbers.formatDecimal(item.hourlyRate, 0, 'COMMA', 0, 'POINT')}">100000</td>
+                            <td th:text="${item.effectiveFrom + ' ~ ' + (item.effectiveTo == null ? 'open' : item.effectiveTo)}">기간</td>
+                            <td><span class="table-pill" th:text="${item.active ? 'ACTIVE' : 'INACTIVE'}">ACTIVE</span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.standardLaborRates)}">
+                            <td colspan="4">등록된 표준노무단가가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <section id="results" class="panel">
+        <div class="section-title">
+            <p class="eyebrow">Results</p>
+            <h2 th:text="${view.focusedClosingPeriodYearMonth == null ? '마감 월 결과 조회' : view.focusedClosingPeriodYearMonth + ' 결과 조회'}">결과 조회</h2>
+        </div>
+        <div class="table-grid result-grid">
+            <div class="table-card">
+                <h3>표준원가 결과</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>버전</th><th>프로젝트</th><th>노무</th><th>공통</th><th>합계</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.standardCostResults}">
+                            <td th:text="${item.calculationVersion}">1</td>
+                            <td th:text="${item.projectCode + ' · ' + item.projectName}">PJT-001</td>
+                            <td th:text="${#numbers.formatDecimal(item.standardLaborCost, 0, 'COMMA', 0, 'POINT')}">0</td>
+                            <td th:text="${#numbers.formatDecimal(item.standardCommonCost, 0, 'COMMA', 0, 'POINT')}">0</td>
+                            <td th:text="${#numbers.formatDecimal(item.totalStandardCost, 0, 'COMMA', 0, 'POINT')}">0</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.standardCostResults)}">
+                            <td colspan="5">표준원가 결과가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card">
+                <h3>배부 실행 이력</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>버전</th><th>배부 기준</th><th>상태</th><th>오류</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.allocationExecutions}">
+                            <td th:text="${item.executionVersion}">1</td>
+                            <td th:text="${item.allocationRuleName}">부서 공통비 배부</td>
+                            <td><span class="table-pill" th:text="${item.status}">SUCCEEDED</span></td>
+                            <td th:text="${item.failureReason == null ? '-' : item.failureReason}">-</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.allocationExecutions)}">
+                            <td colspan="4">배부 실행 이력이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card wide-card">
+                <h3>배부 결과</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>실행</th><th>배부 기준</th><th>원천 비용</th><th>대상 프로젝트</th><th>기준값</th><th>배부액</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.allocationResults}">
+                            <td th:text="${item.executionVersion + ' / ' + item.executionStatus}">1 / SUCCEEDED</td>
+                            <td th:text="${item.allocationRuleName}">배부 기준</td>
+                            <td th:text="${item.sourceDescription}">월간 프로젝트 공통비</td>
+                            <td th:text="${item.targetProjectCode + ' · ' + item.targetProjectName}">PJT-001</td>
+                            <td th:text="${#numbers.formatDecimal(item.basisValue, 0, 'COMMA', 2, 'POINT') + ' / ' + #numbers.formatDecimal(item.allocationRatePercentage, 0, 'COMMA', 2, 'POINT') + '%'}">100 / 25%</td>
+                            <td th:text="${#numbers.formatDecimal(item.allocatedAmount, 0, 'COMMA', 0, 'POINT') + ' (' + #numbers.formatDecimal(item.adjustmentAmount, 0, 'COMMA', 2, 'POINT') + ')'}">100000 (0)</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.allocationResults)}">
+                            <td colspan="6">배부 결과가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card wide-card">
+                <h3>내부대체가액 결과</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr><th>버전</th><th>프로젝트</th><th>인력</th><th>소속</th><th>시간</th><th>단가</th><th>내부대체가액</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${view.transferPriceResults}">
+                            <td th:text="${item.calculationVersion}">1</td>
+                            <td th:text="${item.projectCode + ' · ' + item.projectName}">PJT-001</td>
+                            <td th:text="${item.employeeNo + ' · ' + item.employeeName}">EMP-1001</td>
+                            <td th:text="${item.departmentName + ' / ' + item.jobGradeName}">부서 / 직급</td>
+                            <td th:text="${#numbers.formatDecimal(item.workHours, 0, 'COMMA', 2, 'POINT')}">160</td>
+                            <td th:text="${#numbers.formatDecimal(item.hourlyRate, 0, 'COMMA', 0, 'POINT')}">100000</td>
+                            <td th:text="${#numbers.formatDecimal(item.transferAmount, 0, 'COMMA', 0, 'POINT')}">16000000</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(view.transferPriceResults)}">
+                            <td colspan="7">내부대체가액 결과가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>
