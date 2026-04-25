@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>원가관리/관리회계 월마감 시스템 포트폴리오</title>
+  <style>
+    @font-face {
+      font-family: 'NanumSquareNeo';
+      src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-bRg.woff2);
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'NanumSquareNeo';
+      src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-cBd.woff2);
+      font-weight: 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'NanumSquareNeo';
+      src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-eHv.woff2);
+      font-weight: 900;
+      font-display: swap;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #101827 48%, #16213e 100%);
+      --surface: rgba(255, 255, 255, 0.055);
+      --surface-strong: rgba(255, 255, 255, 0.09);
+      --border: rgba(255, 255, 255, 0.10);
+      --border-accent: rgba(0, 210, 255, 0.30);
+      --text-primary: #f5f7fb;
+      --text-secondary: rgba(245, 247, 251, 0.75);
+      --text-muted: rgba(245, 247, 251, 0.48);
+      --accent-1: #00d2ff;
+      --accent-2: #7b2ff7;
+      --accent-3: #ffb86c;
+      --danger: #ff6b6b;
+      --success: #63e6be;
+      --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      --tag-bg: rgba(0, 210, 255, 0.15);
+      --tag-color: #7ee8ff;
+      --font-family: 'NanumSquareNeo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-family);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.65;
+      overflow-x: hidden;
+      counter-reset: slide;
+    }
+    .slide {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 56px 28px;
+      position: relative;
+      scroll-snap-align: start;
+      border-top: 1px solid var(--border);
+      background: radial-gradient(circle at 12% 15%, rgba(0,210,255,.10), transparent 28%), radial-gradient(circle at 88% 12%, rgba(123,47,247,.14), transparent 30%), #0a0a0a;
+    }
+    .slide--title { background: var(--bg-gradient); }
+    .slide--light { background: linear-gradient(180deg, #0b1020 0%, #0a0a0a 100%); }
+    .slide--closing { background: linear-gradient(135deg, #16213e, #101827, #0a0a0a); }
+    .slide::after {
+      counter-increment: slide;
+      content: counter(slide, decimal-leading-zero);
+      position: absolute;
+      bottom: 24px;
+      right: 36px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+    .slide__inner { max-width: 1180px; margin: 0 auto; width: 100%; }
+    .narrow { max-width: 860px; }
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      color: var(--accent-1);
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: clamp(2.5rem, 7vw, 5.3rem); font-weight: 900; line-height: 1.08; letter-spacing: -0.045em; margin-bottom: 22px; }
+    h2 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 900; line-height: 1.18; letter-spacing: -0.035em; margin-bottom: 18px; }
+    h3 { font-size: 1.18rem; font-weight: 800; margin-bottom: 8px; }
+    .desc { color: var(--text-secondary); font-size: clamp(1rem, 1.8vw, 1.16rem); max-width: 900px; margin-bottom: 30px; }
+    .gradient-text { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--tag-bg);
+      color: var(--tag-color);
+      border: 1px solid rgba(0, 210, 255, .22);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin: 0 6px 10px 0;
+    }
+    .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, .22);
+    }
+    .card.strong { background: var(--surface-strong); border-color: var(--border-accent); }
+    .card-title { font-size: 1.08rem; font-weight: 900; margin-bottom: 8px; }
+    .card-desc { color: var(--text-secondary); font-size: .95rem; }
+    .muted { color: var(--text-muted); }
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 28px; }
+    .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; }
+    .stat-num { display: block; color: var(--accent-1); font-size: clamp(1.6rem, 3.6vw, 2.7rem); font-weight: 900; line-height: 1.1; }
+    .stat-label { color: var(--text-muted); font-size: .85rem; margin-top: 7px; }
+    .comparison { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 16px; }
+    .comparison-col { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; }
+    .comparison-divider { align-self: center; font-size: 28px; color: var(--text-muted); font-weight: 900; }
+    .flow-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 24px; }
+    .flow-step { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; min-height: 144px; }
+    .flow-num {
+      display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center;
+      border-radius: 50%; background: var(--accent-gradient); font-weight: 900; margin-bottom: 12px;
+    }
+    .timeline { position: relative; padding-left: 30px; margin-top: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 9px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+    .tl-item { position: relative; margin-bottom: 22px; }
+    .tl-dot { position: absolute; left: -27px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--accent-1); background: var(--bg); }
+    .tl-dot.active { background: var(--accent-1); }
+    .tl-title { font-weight: 900; margin-bottom: 3px; }
+    .tl-desc { color: var(--text-secondary); font-size: .95rem; }
+    .screen-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; align-items: stretch; }
+    .screen-stack { display: grid; gap: 16px; }
+    .shot-card { background: rgba(255,255,255,.035); border: 1px solid var(--border); border-radius: 22px; padding: 14px; }
+    .shot-caption { color: var(--text-muted); font-size: .82rem; margin: 10px 4px 0; }
+    .mock-screen {
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, #0f172a, #111827);
+      box-shadow: 0 26px 80px rgba(0,0,0,.45);
+      overflow: hidden;
+    }
+    .mock-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255,255,255,.05);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: .84rem;
+      color: var(--text-secondary);
+    }
+    .mock-body { padding: 16px; display: grid; gap: 12px; }
+    .mock-hero {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(0,210,255,.10), rgba(123,47,247,.14));
+    }
+    .mock-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .mock-stat, .mock-panel, .mock-table, .mock-form, .mock-result {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,.04);
+    }
+    .mock-stat { min-height: 78px; padding: 14px; }
+    .mock-panel { min-height: 90px; padding: 14px; }
+    .mock-form { min-height: 150px; padding: 14px; }
+    .mock-table { min-height: 132px; padding: 14px; }
+    .mock-result { min-height: 120px; padding: 14px; }
+    .mock-line { height: 10px; border-radius: 999px; background: rgba(255,255,255,.14); margin-bottom: 10px; }
+    .mock-line.short { width: 40%; }
+    .mock-line.mid { width: 68%; }
+    .mock-line.long { width: 92%; }
+    .decision-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 18px; margin-top: 20px; }
+    .decision-list { list-style: none; display: grid; gap: 10px; }
+    .decision-list li { background: rgba(255,255,255,.045); border: 1px solid var(--border); border-radius: 14px; padding: 13px 15px; color: var(--text-secondary); }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 900; margin-right: 6px; }
+    .pill.good { color: #08251c; background: var(--success); }
+    .pill.warn { color: #2c1600; background: var(--accent-3); }
+    .pill.bad { color: #2b0505; background: var(--danger); }
+    .evidence { font-size: .82rem; color: var(--text-muted); margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+    .quote-box { border-left: 4px solid var(--accent-1); background: var(--surface); border-radius: 0 18px 18px 0; padding: 24px; margin-top: 20px; }
+    .quote-text { font-size: 1.12rem; font-weight: 800; line-height: 1.7; }
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; margin-top: 18px; }
+    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--accent-1); background: rgba(255,255,255,.06); font-size: .86rem; }
+    td { color: var(--text-secondary); font-size: .9rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .small { font-size: .88rem; }
+    .mt { margin-top: 24px; }
+
+    @media (max-width: 900px) {
+      .slide { padding: 42px 20px; }
+      .card-grid, .card-grid.three, .screen-grid, .decision-grid, .two-col, .comparison { grid-template-columns: 1fr; }
+      .comparison-divider { transform: rotate(90deg); text-align: center; }
+      .flow-container { grid-template-columns: 1fr; }
+      .stat-row, .mock-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .stat-row, .mock-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide slide--title">
+    <div class="slide__inner narrow">
+      <div class="label">Portfolio / Management Accounting Platform</div>
+      <h1>원가관리·관리회계<br><span class="gradient-text">월마감 운영 시스템</span></h1>
+      <p class="desc">본부·부서·인력·프로젝트 기준정보를 바탕으로 비용을 귀속하고, 표준원가 계산·공통비 배부·내부대체가액 계산까지 하나의 마감 월 기준으로 운영하는 Spring Boot 기반 관리회계 포트폴리오 프로젝트입니다.</p>
+      <div>
+        <span class="tag">Spring Boot</span><span class="tag">Thymeleaf</span><span class="tag">JPA</span><span class="tag">PostgreSQL</span><span class="tag">Management Accounting</span><span class="tag">WebMvcTest</span>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><span class="stat-num">5+</span><div class="stat-label">기준정보 축<br>본부·부서·직급·인력·프로젝트·비용항목</div></div>
+        <div class="stat-box"><span class="stat-num">3</span><div class="stat-label">핵심 계산 흐름<br>표준원가·배부·내부대체가액</div></div>
+        <div class="stat-box"><span class="stat-num">2</span><div class="stat-label">운영 화면<br>대시보드·운영 콘솔</div></div>
+        <div class="stat-box"><span class="stat-num">32</span><div class="stat-label">검증된 테스트 수<br>웹 16 + 도메인 16</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--light">
+    <div class="slide__inner">
+      <div class="label">Context</div>
+      <h2>문제는 단순 입력이 아니라<br><span class="gradient-text">마감 월 기준의 원가 통제</span>입니다</h2>
+      <p class="desc">관리회계 시스템은 기준정보를 따로 유지하고, 월별로 비용을 귀속하며, 계산 결과를 다시 조회 가능한 형태로 남겨야 합니다. 이 프로젝트는 “한 달의 운영 화면”을 중심으로 등록·계산·결과 조회가 끊기지 않도록 워크스페이스 구조를 만들었습니다.</p>
+      <div class="flow-container">
+        <div class="flow-step"><span class="flow-num">1</span><h3>기준정보</h3><p class="card-desc">본부, 부서, 직급, 인력, 프로젝트, 참여 인력을 등록합니다.</p></div>
+        <div class="flow-step"><span class="flow-num">2</span><h3>마감 선택</h3><p class="card-desc">운영 콘솔은 focusedClosingPeriod 기준으로 동일한 월 데이터를 묶어 조회합니다.</p></div>
+        <div class="flow-step"><span class="flow-num">3</span><h3>비용 입력</h3><p class="card-desc">프로젝트/부서/본부/인력/전사 범위로 비용을 귀속시킵니다.</p></div>
+        <div class="flow-step"><span class="flow-num">4</span><h3>계산 실행</h3><p class="card-desc">표준원가, 공통비 배부, 내부대체가액을 순차적으로 계산합니다.</p></div>
+        <div class="flow-step"><span class="flow-num">5</span><h3>결과 조회</h3><p class="card-desc">실행 버전과 결과 테이블을 운영 콘솔에서 다시 확인합니다.</p></div>
+      </div>
+      <p class="evidence">근거: 운영 콘솔 엔드포인트와 마감 월 중심 조회 구조는 <span class="mono">src/main/java/com/costflow/accounting/interfaces/web/OperationsViewController.java:32-37</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/OperationsWorkspaceFacade.java:110-171</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/OperationsWorkspaceFacade.java:241-343</span>에 반영되어 있습니다.</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide__inner">
+      <div class="label">Live Surface</div>
+      <h2>보험 프로젝트처럼 이번 포트폴리오도<br><span class="gradient-text">운영 화면 중심</span>으로 설명합니다</h2>
+      <p class="desc">실제 프로젝트는 대시보드와 업무용 운영 콘솔 두 화면으로 나뉘며, 대시보드는 현재 상태를 요약하고 운영 콘솔은 등록·계산·결과 조회를 한 곳에서 처리합니다.</p>
+      <div class="screen-grid">
+        <div class="shot-card">
+          <div class="mock-screen">
+            <div class="mock-topbar"><span>Dashboard</span><span>CostFlow Manager / Summary</span></div>
+            <div class="mock-body">
+              <div class="mock-hero">
+                <div class="mock-line long"></div>
+                <div class="mock-line mid"></div>
+              </div>
+              <div class="mock-row">
+                <div class="mock-stat"><div class="mock-line short"></div><div class="mock-line mid"></div></div>
+                <div class="mock-stat"><div class="mock-line short"></div><div class="mock-line mid"></div></div>
+                <div class="mock-stat"><div class="mock-line short"></div><div class="mock-line mid"></div></div>
+                <div class="mock-stat"><div class="mock-line short"></div><div class="mock-line mid"></div></div>
+              </div>
+              <div class="mock-panel"><div class="mock-line short"></div><div class="mock-line long"></div><div class="mock-line long"></div></div>
+              <div class="mock-table"><div class="mock-line short"></div><div class="mock-line long"></div><div class="mock-line long"></div><div class="mock-line mid"></div></div>
+            </div>
+          </div>
+          <div class="shot-caption">대시보드: 기준정보 수량, 마감 월 현황, 프로젝트 현황을 한 번에 요약하는 랜딩 화면</div>
+        </div>
+        <div class="screen-stack">
+          <div class="shot-card">
+            <div class="mock-screen">
+              <div class="mock-topbar"><span>Operations Workspace</span><span>Setup / Closing / Calculation</span></div>
+              <div class="mock-body">
+                <div class="mock-form"><div class="mock-line short"></div><div class="mock-line long"></div><div class="mock-line long"></div><div class="mock-line mid"></div></div>
+                <div class="mock-table"><div class="mock-line short"></div><div class="mock-line long"></div><div class="mock-line long"></div></div>
+              </div>
+            </div>
+            <div class="shot-caption">운영 콘솔 상단: 기준정보 등록, 마감 월 선택, 비용 입력 등 업무 오퍼레이션 입력 영역</div>
+          </div>
+          <div class="shot-card">
+            <div class="mock-screen">
+              <div class="mock-topbar"><span>Results</span><span>Standard Cost / Allocation / Transfer Price</span></div>
+              <div class="mock-body">
+                <div class="mock-result"><div class="mock-line short"></div><div class="mock-line long"></div><div class="mock-line long"></div></div>
+                <div class="mock-result"><div class="mock-line short"></div><div class="mock-line long"></div><div class="mock-line mid"></div></div>
+              </div>
+            </div>
+            <div class="shot-caption">운영 콘솔 하단: 표준원가 결과, 배부 실행/결과, 내부대체가액 결과 조회 영역</div>
+          </div>
+        </div>
+      </div>
+      <p class="evidence">화면 근거: <span class="mono">src/main/resources/templates/dashboard.html:10-147</span>, <span class="mono">src/main/resources/templates/operations.html:10-220</span>, <span class="mono">src/main/resources/templates/operations.html:297-420</span></p>
+    </div>
+  </section>
+
+  <section class="slide slide--light">
+    <div class="slide__inner">
+      <div class="label">Decision 01 / Web Boundary</div>
+      <h2>왜 <span class="gradient-text">얇은 Controller + Workspace Facade</span> 구조인가?</h2>
+      <div class="comparison mt">
+        <div class="comparison-col">
+          <h3>대안 A: Controller에서 직접 조합</h3>
+          <p class="card-desc">화면별 요구사항을 맞추기 위해 컨트롤러가 서비스 여러 개를 직접 호출하고 조합한다.</p>
+          <ul class="decision-list mt">
+            <li><span class="pill bad">문제</span>컨트롤러가 조합 로직을 품어 아키텍처 규칙을 쉽게 위반한다.</li>
+            <li><span class="pill bad">문제</span>마감 월 기준의 집계/정렬/변환 로직이 웹 계층에 흩어진다.</li>
+          </ul>
+        </div>
+        <div class="comparison-divider">→</div>
+        <div class="comparison-col strong">
+          <h3>선택: OperationsWorkspaceFacade</h3>
+          <p class="card-desc">컨트롤러는 요청/응답 변환만 하고, 화면 조합은 Facade가 전담한다.</p>
+          <ul class="decision-list mt">
+            <li><span class="pill good">결과</span>웹 계층은 redirect와 flash message 처리에 집중한다.</li>
+            <li><span class="pill good">결과</span>focusedClosingPeriod 기준으로 기준정보·비용·결과 데이터를 한 번에 구성한다.</li>
+          </ul>
+        </div>
+      </div>
+      <table>
+        <tr><th>컨트롤러 역할</th><td>등록/계산 요청을 받아 Facade 한 곳으로 위임하고, 성공/실패 notice만 구성합니다.</td></tr>
+        <tr><th>Facade 역할</th><td>기준정보, 마감 월, 비용, 표준원가, 배부, 내부대체가액 결과를 읽어 운영 화면용 DTO로 정리합니다.</td></tr>
+      </table>
+      <p class="evidence">근거: <span class="mono">src/main/java/com/costflow/accounting/interfaces/web/OperationsViewController.java:39-320</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/OperationsWorkspaceFacade.java:110-171</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/OperationsWorkspaceFacade.java:241-343</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/OperationsWorkspaceFacade.java:486-503</span></p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide__inner">
+      <div class="label">Decision 02 / Closing Control</div>
+      <h2>계산은 아무 때나 돌리지 않고<br><span class="gradient-text">마감 상태 규칙 안에서만</span> 실행합니다</h2>
+      <div class="decision-grid">
+        <div class="card strong">
+          <h3>선택 기준</h3>
+          <ul class="decision-list">
+            <li><span class="pill good">원칙</span>표준원가, 배부, 내부대체가액 계산 전 모두 <span class="mono">validateCostEditable</span>를 통과해야 합니다.</li>
+            <li><span class="pill warn">상태</span>마감 월 상태 전이는 별도 정책으로 관리하고, CONFIRMED에서는 비용 수정이 막힙니다.</li>
+            <li><span class="pill good">조회</span>운영 콘솔은 선택 마감 월이 없으면 최신 마감 월을 기본으로 잡아 화면을 유지합니다.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>검증 포인트</h3>
+          <table>
+            <tr><th>대상</th><th>확인 내용</th></tr>
+            <tr><td>마감 정책</td><td>OPEN에서는 비용 수정 가능, CONFIRMED에서는 수정 불가</td></tr>
+            <tr><td>표준원가</td><td>계산 실행 전 마감 월 editable 검증 수행</td></tr>
+            <tr><td>배부 실행</td><td>공통비가 없거나 대상 프로젝트가 없으면 실패</td></tr>
+            <tr><td>내부대체가액</td><td>마감 월 기준 계산 버전을 증가시켜 결과 생성</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="evidence">근거: <span class="mono">src/main/java/com/costflow/accounting/application/facade/StandardCostCalculationFacade.java:42-53</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/AllocationExecutionFacade.java:52-84</span>, <span class="mono">src/main/java/com/costflow/accounting/application/facade/TransferPriceCalculationFacade.java:38-46</span>, <span class="mono">build/test-results/test/TEST-com.costflow.accounting.domain.closing.ClosingStatePolicyTest.xml:2-7</span></p>
+    </div>
+  </section>
+
+  <section class="slide slide--light">
+    <div class="slide__inner">
+      <div class="label">Decision 03 / Calculation Pipeline</div>
+      <h2>핵심 가치는 단순 CRUD가 아니라<br><span class="gradient-text">계산 파이프라인을 이어 붙인 것</span>입니다</h2>
+      <div class="card-grid three">
+        <div class="card strong">
+          <div class="card-title">표준원가 계산</div>
+          <p class="card-desc">활성 프로젝트 참여 인력을 프로젝트별로 묶고, 마감 월 말일 기준 유효한 표준노무단가를 찾아 노무원가를 합산합니다.</p>
+          <p class="evidence mono">src/main/java/com/costflow/accounting/application/facade/StandardCostCalculationFacade.java:43-84</p>
+        </div>
+        <div class="card strong">
+          <div class="card-title">공통비 배부</div>
+          <p class="card-desc">공통비를 HOURS / DIRECT_COST / EQUAL 기준값으로 대상 프로젝트들에 나누고, 실행 버전과 idempotency key를 남깁니다.</p>
+          <p class="evidence mono">src/main/java/com/costflow/accounting/application/facade/AllocationExecutionFacade.java:52-113</p>
+        </div>
+        <div class="card strong">
+          <div class="card-title">내부대체가액 계산</div>
+          <p class="card-desc">참여 인력별 월 투입시간과 유효 표준단가를 조합해 마감 월 버전 단위 결과를 생성합니다.</p>
+          <p class="evidence mono">src/main/java/com/costflow/accounting/application/facade/TransferPriceCalculationFacade.java:38-68</p>
+        </div>
+      </div>
+      <table>
+        <tr><th>입력</th><td>기준정보, 프로젝트 참여 인력, 비용, 마감 월, 표준노무단가</td></tr>
+        <tr><th>중간 제어</th><td>마감 월 상태 검증, 공통비 존재 여부 확인, 배부 대상 프로젝트 계산</td></tr>
+        <tr><th>출력</th><td>표준원가 결과, 배부 실행/결과, 내부대체가액 결과를 운영 콘솔에서 다시 조회</td></tr>
+      </table>
+      <p class="evidence">운영 화면 연결 근거: <span class="mono">src/main/java/com/costflow/accounting/interfaces/web/OperationsViewController.java:241-320</span>, <span class="mono">src/main/resources/templates/operations.html:381-649</span></p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide__inner">
+      <div class="label">Verification</div>
+      <h2>“돌아간다”가 아니라<br><span class="gradient-text">웹과 도메인 테스트로 확인</span>했습니다</h2>
+      <div class="card-grid three">
+        <div class="card strong">
+          <div class="card-title">웹 회귀 테스트</div>
+          <p class="card-desc">운영 콘솔 GET 렌더링, 기준정보 등록, 마감 월 생성/전환, 비용 입력, 계산/배부 실행 흐름을 WebMvcTest로 검증했습니다.</p>
+          <p class="evidence mono">build/test-results/test/TEST-com.costflow.accounting.interfaces.web.OperationsViewControllerTest.xml:2-19</p>
+        </div>
+        <div class="card strong">
+          <div class="card-title">도메인 규칙 테스트</div>
+          <p class="card-desc">배부 비율/보정, 마감 상태 정책, 비용 생성 규칙, 프로젝트 참여 인력 제약, 내부대체가액 계산을 각각 분리해 검증했습니다.</p>
+          <p class="evidence mono">build/test-results/test/TEST-com.costflow.accounting.domain.allocation.AllocationDomainServiceTest.xml:2-6, build/test-results/test/TEST-com.costflow.accounting.domain.closing.ClosingStatePolicyTest.xml:2-7, build/test-results/test/TEST-com.costflow.accounting.domain.cost.CostEntryTest.xml:2-6, build/test-results/test/TEST-com.costflow.accounting.domain.project.ProjectMemberTest.xml:2-7, build/test-results/test/TEST-com.costflow.accounting.domain.transferprice.TransferPriceDomainServiceTest.xml:2-5</p>
+        </div>
+        <div class="card strong">
+          <div class="card-title">전체 테스트 상태</div>
+          <p class="card-desc">현재 프로젝트 전체 테스트는 성공 상태이며, 최근 실행에서도 BUILD SUCCESSFUL을 확인했습니다.</p>
+          <p class="evidence mono">build/test-results/test/TEST-com.costflow.accounting.interfaces.web.OperationsViewControllerTest.xml:2, build/test-results/test/TEST-com.costflow.accounting.domain.transferprice.TransferPriceDomainServiceTest.xml:2</p>
+        </div>
+      </div>
+      <div class="quote-box mt">
+        <p class="quote-text">이 프로젝트의 강점은 단순한 관리 화면 추가가 아니라, 운영 콘솔에서 발생하는 주요 등록/계산 흐름을 테스트로 고정해 회귀를 줄였다는 점입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--light">
+    <div class="slide__inner">
+      <div class="label">Infrastructure / Stack</div>
+      <h2>기술 선택은 빠른 시연보다<br><span class="gradient-text">업무 흐름 일관성</span>에 맞췄습니다</h2>
+      <div class="comparison">
+        <div class="comparison-col strong">
+          <h3>현재 선택</h3>
+          <ul class="decision-list">
+            <li><span class="pill good">Spring Boot</span>웹, validation, JPA, 템플릿 서버 렌더링을 한 프로젝트에 통합</li>
+            <li><span class="pill good">Thymeleaf</span>운영 콘솔과 대시보드를 빠르게 시연 가능한 형태로 구성</li>
+            <li><span class="pill good">PostgreSQL</span>기본 데이터소스와 실제 업무형 저장소 구성을 명시</li>
+          </ul>
+        </div>
+        <div class="comparison-divider">↔</div>
+        <div class="comparison-col">
+          <h3>의도적으로 남긴 여지</h3>
+          <ul class="decision-list">
+            <li><span class="pill warn">확장</span>정산 스냅샷, 감사 로그, 브라우저 기반 시연 캡처는 다음 단계 후보</li>
+            <li><span class="pill warn">검증</span>현재는 WebMvcTest + 도메인 테스트 중심, 통합 시나리오 확장은 후속 작업</li>
+            <li><span class="pill warn">운영성</span>마감 결과 보존 정책과 조회 리포트 화면은 더 고도화 가능</li>
+          </ul>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><span class="stat-num">8080</span><div class="stat-label">기본 서버 포트</div></div>
+        <div class="stat-box"><span class="stat-num">5432</span><div class="stat-label">기본 PostgreSQL 포트</div></div>
+        <div class="stat-box"><span class="stat-num">3</span><div class="stat-label">핵심 Spring Starter<br>Web / Thymeleaf / Data JPA</div></div>
+        <div class="stat-box"><span class="stat-num">1</span><div class="stat-label">단일 운영 콘솔<br>등록·계산·조회 통합</div></div>
+      </div>
+      <p class="evidence">근거: <span class="mono">build.gradle.kts:26-38</span>, <span class="mono">src/main/resources/application.yml:1-16</span>, <span class="mono">src/main/java/com/costflow/accounting/interfaces/web/DashboardViewController.java:23-33</span></p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide__inner">
+      <div class="label">Roadmap</div>
+      <h2>다음 단계는 <span class="gradient-text">마감 결과 보존과 시연 고도화</span>입니다</h2>
+      <div class="timeline">
+        <div class="tl-item"><span class="tl-dot active"></span><div class="tl-title">1. 기준정보·비용·계산 워크스페이스</div><div class="tl-desc">현재 운영 콘솔에서 기준정보 등록, 비용 입력, 표준원가/배부/내부대체가액 계산이 연결되어 있습니다.</div></div>
+        <div class="tl-item"><span class="tl-dot active"></span><div class="tl-title">2. 웹 회귀 테스트 보강</div><div class="tl-desc">운영 콘솔 주요 POST/GET 흐름에 대한 16개 WebMvcTest 시나리오가 추가되어 있습니다.</div></div>
+        <div class="tl-item"><span class="tl-dot"></span><div class="tl-title">3. 정산 스냅샷/결과 보존</div><div class="tl-desc">대시보드 문구 기준으로 확정 결과를 settlement 스냅샷으로 보존하는 단계가 후속 후보입니다.</div></div>
+        <div class="tl-item"><span class="tl-dot"></span><div class="tl-title">4. 브라우저 기반 시연 증거 강화</div><div class="tl-desc">보험 프로젝트처럼 실제 운영 화면 캡처와 사용자 시나리오 흐름을 포트폴리오에 추가하는 단계가 남아 있습니다.</div></div>
+        <div class="tl-item"><span class="tl-dot"></span><div class="tl-title">5. 리포트/감사 관점 확장</div><div class="tl-desc">마감 월별 결과 비교, 감사 로그, 조회 전용 화면으로 운영성을 더 강화할 수 있습니다.</div></div>
+      </div>
+      <p class="evidence">근거: <span class="mono">src/main/resources/templates/dashboard.html:107-113</span>, <span class="mono">build/test-results/test/TEST-com.costflow.accounting.interfaces.web.OperationsViewControllerTest.xml:2-19</span></p>
+    </div>
+  </section>
+
+  <section class="slide slide--closing">
+    <div class="slide__inner narrow">
+      <div class="label">Closing</div>
+      <h2>이 프로젝트의 핵심 메시지</h2>
+      <div class="quote-box">
+        <p class="quote-text">원가관리/관리회계 도메인에서 기준정보, 마감 월, 비용 귀속, 계산 결과를 하나의 운영 콘솔에 묶고, 얇은 웹 계층과 Facade 조합, 그리고 회귀 테스트로 안정성을 확보한 월마감 운영 시스템입니다.</p>
+      </div>
+      <div class="card-grid mt">
+        <div class="card"><h3>보여준 역량</h3><p class="card-desc">Spring Boot, Thymeleaf, JPA, 도메인 규칙 설계, 마감 상태 통제, 계산 파이프라인, WebMvcTest 기반 회귀 방어</p></div>
+        <div class="card"><h3>차별점</h3><p class="card-desc">단순 CRUD 소개가 아니라 “운영자가 월마감을 어떻게 수행하는가”를 화면 구조, 계산 흐름, 테스트 근거까지 연결해 설명한다는 점입니다.</p></div>
+      </div>
+      <p class="desc mt">Standalone HTML 포트폴리오 파일로 바로 열어 발표자료처럼 스크롤 시연할 수 있게 구성했습니다.</p>
+    </div>
+  </section>
+</body>
+</html>
