@@ -12,5 +12,9 @@ public interface CostEntryRepository {
 
     List<CostEntry> findByClosingPeriodId(UUID closingPeriodId);
 
+    List<CostEntry> findByClosingPeriodIdAndCostType(UUID closingPeriodId, CostType costType);
+
+    List<CostEntry> findByClosingPeriodIdAndCostTypeAndCostScope(UUID closingPeriodId, CostType costType, CostScope costScope);
+
     void delete(CostEntry costEntry);
 }

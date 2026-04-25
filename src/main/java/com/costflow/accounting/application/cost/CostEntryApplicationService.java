@@ -5,6 +5,8 @@ import com.costflow.accounting.domain.closing.ClosingPeriod;
 import com.costflow.accounting.domain.cost.CostCategory;
 import com.costflow.accounting.domain.cost.CostEntry;
 import com.costflow.accounting.domain.cost.CostEntryRepository;
+import com.costflow.accounting.domain.cost.CostScope;
+import com.costflow.accounting.domain.cost.CostType;
 import com.costflow.accounting.domain.organization.Department;
 import com.costflow.accounting.domain.organization.Employee;
 import com.costflow.accounting.domain.organization.Headquarters;
@@ -91,5 +93,19 @@ public class CostEntryApplicationService {
     @Transactional(readOnly = true)
     public List<CostEntry> getByClosingPeriod(final UUID closingPeriodId) {
         return costEntryRepository.findByClosingPeriodId(closingPeriodId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CostEntry> getByClosingPeriodAndCostType(final UUID closingPeriodId, final CostType costType) {
+        return costEntryRepository.findByClosingPeriodIdAndCostType(closingPeriodId, costType);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CostEntry> getByClosingPeriodAndCostTypeAndCostScope(
+        final UUID closingPeriodId,
+        final CostType costType,
+        final CostScope costScope
+    ) {
+        return costEntryRepository.findByClosingPeriodIdAndCostTypeAndCostScope(closingPeriodId, costType, costScope);
     }
 }

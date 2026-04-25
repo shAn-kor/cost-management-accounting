@@ -77,4 +77,9 @@ public class ProjectMemberApplicationService {
     public List<ProjectMember> getAllByProjectId(final UUID projectId) {
         return projectMemberRepository.findAllByProjectId(projectId);
     }
+
+    @Transactional(readOnly = true)
+    public List<ProjectMember> getAllActive() {
+        return projectMemberRepository.findAllByActiveTrue();
+    }
 }

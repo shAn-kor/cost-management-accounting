@@ -43,4 +43,14 @@ public class ProjectApplicationService {
     public List<Project> getAll() {
         return projectRepository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public List<Project> getByDepartment(final UUID departmentId) {
+        return projectRepository.findAllByDepartmentId(departmentId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Project> getByHeadquarters(final UUID headquartersId) {
+        return projectRepository.findAllByDepartmentHeadquartersId(headquartersId);
+    }
 }

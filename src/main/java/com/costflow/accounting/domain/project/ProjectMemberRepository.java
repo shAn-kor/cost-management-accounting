@@ -11,4 +11,6 @@ public interface ProjectMemberRepository {
     Optional<ProjectMember> findById(UUID id);
 
     List<ProjectMember> findAllByProjectId(UUID projectId);
+
+    List<ProjectMember> findAllByActiveTrue();
 }

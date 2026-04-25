@@ -11,4 +11,8 @@ public interface ProjectRepository {
     Optional<Project> findById(UUID id);
 
     List<Project> findAll();
+
+    List<Project> findAllByDepartmentId(UUID departmentId);
+
+    List<Project> findAllByDepartmentHeadquartersId(UUID headquartersId);
 }
